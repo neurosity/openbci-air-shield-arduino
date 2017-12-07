@@ -1,3 +1,49 @@
+# v2.0.0
+
+### New Features
+
+* UDP support
+* WiFi Direct default support (thanks @jnaulty)
+* New docs (code of conduct, roadmap, contributing, readme)
+* When in WiFi direct mode, connect PC to WiFi Shield hotspot, and navigate to `192.168.4.1`
+* Now visit `192.168.4.1/wifi` in your browser to connect wifi shield to a new network
+* To erase your network credentials and use wifi direct, use GUI or go to ip address of wifi shield and go to /wifi/delete
+
+### Breaking Changes
+
+* No longer doing captive portal by default, must join network and go to 192.168.4.1
+
+### Work In Progress
+
+* MQTT Secure
+* Stability of wifi shield #48
+
+## Beta 2
+
+### Bug Fixes
+
+* Switch to Station if connect to wifi network success.
+
+## Beta 1
+
+### Bug Fixes
+
+* Can't connect to shield #51
+
+# v1.3.0
+
+At this time, can no longer support both RAW and JSON modes with a single binary file. Need optimized builds. We ended up having two modes that didnt work that well instead of highly optimized builds for the different operating modes.
+
+### Breaking Changes
+
+* For RAW only (can't do Raw to JSON or MQTT) - upload the binary for `DefaultWifiShield_v1.3.0.bin`
+  * This is the default firmware to be shipped with WiFi Shields
+  * Sample rates of 1000Hz with Cyton (with or without Daisy) possible
+  * Use the OpenBCI_GUI/OpenBCIHub
+* For JSON over (TCP/MQTT) (can't use OpenBCI GUI) - upload the binary for `WifiShield_RawToJSON_v1.3.0.bin`
+  * Only tested with 200Hz with Ganglion
+  * Only tested with 250Hz with Cyton
+
 # v1.2.0
 
 ### Bug Fixes
