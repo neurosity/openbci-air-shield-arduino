@@ -19,8 +19,12 @@
 
 #include <Arduino.h>
 #include <time.h>
-#include <ESP8266WiFi.h>
-#include "SPISlave.h"
+#ifdef ESP8266
+  #include <ESP8266WiFi.h>
+  #include "SPISlave.h"
+#else
+  #include <WiFi.h>
+#endif
 #include <ArduinoJson.h>
 #include "OpenBCI_Wifi_Definitions.h"
 

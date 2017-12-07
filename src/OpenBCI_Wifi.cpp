@@ -360,10 +360,11 @@ uint8_t OpenBCI_Wifi_Class::getJSONMaxPackets() {
  * @return {String} The last two bytes, will always be four chars.
  */
 String OpenBCI_Wifi_Class::getMacLastFourBytes(void) {
-  uint8_t mac[WL_MAC_ADDR_LENGTH];
+  static uint8_t macLength = 6;
+  uint8_t mac[macLength];
   WiFi.softAPmacAddress(mac);
-  String macID = perfectPrintByteHex(mac[WL_MAC_ADDR_LENGTH - 2]) +
-                 perfectPrintByteHex(mac[WL_MAC_ADDR_LENGTH - 1]);
+  String macID = perfectPrintByteHex(mac[macLength - 2]) +
+                 perfectPrintByteHex(mac[macLength - 1]);
   macID.toUpperCase();
   return macID;
 }
@@ -373,14 +374,15 @@ String OpenBCI_Wifi_Class::getMacLastFourBytes(void) {
  * @return  {String} Mac address with bytes separated with colons
  */
 String OpenBCI_Wifi_Class::getMac(void) {
-  uint8_t mac[WL_MAC_ADDR_LENGTH];
+  static uint8_t macLength = 6;
+  uint8_t mac[macLength];
   WiFi.softAPmacAddress(mac);
-  String fullMac = perfectPrintByteHex(mac[WL_MAC_ADDR_LENGTH - 6]) + ":" +
-                   perfectPrintByteHex(mac[WL_MAC_ADDR_LENGTH - 5]) + ":" +
-                   perfectPrintByteHex(mac[WL_MAC_ADDR_LENGTH - 4]) + ":" +
-                   perfectPrintByteHex(mac[WL_MAC_ADDR_LENGTH - 3]) + ":" +
-                   perfectPrintByteHex(mac[WL_MAC_ADDR_LENGTH - 2]) + ":" +
-                   perfectPrintByteHex(mac[WL_MAC_ADDR_LENGTH - 1]);
+  String fullMac = perfectPrintByteHex(mac[macLength - 6]) + ":" +
+                   perfectPrintByteHex(mac[macLength - 5]) + ":" +
+                   perfectPrintByteHex(mac[macLength - 4]) + ":" +
+                   perfectPrintByteHex(mac[macLength - 3]) + ":" +
+                   perfectPrintByteHex(mac[macLength - 2]) + ":" +
+                   perfectPrintByteHex(mac[macLength - 1]);
   fullMac.toUpperCase();
   return fullMac;
 }
@@ -902,7 +904,8 @@ uint8_t OpenBCI_Wifi_Class::passthroughCommands(String commands) {
   passthroughBufferLoaded = true;
   clientWaitingForResponse = true;
   timePassthroughBufferLoaded = millis();
-  SPISlave.setData(passthroughBuffer, BYTES_PER_SPI_PACKET);
+  // TODO: set data data SPI slave
+  // SPISlave.setData(passthroughBuffer, BYTES_PER_SPI_PACKET);
   return PASSTHROUGH_PASS;
 }
 
