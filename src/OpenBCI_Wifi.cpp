@@ -464,7 +464,7 @@ String OpenBCI_Wifi_Class::getOutputProtocolString(OUTPUT_PROTOCOL outputProtoco
       return OUTPUT_NONE;
   }
 }
-
+#ifdef RAW_TO_JSON
 double OpenBCI_Wifi_Class::getScaleFactorVoltsGanglion() {
   return MCP_SCALE_FACTOR_VOLTS;
 }
@@ -496,6 +496,7 @@ double OpenBCI_Wifi_Class::getScaleFactorVoltsCyton(uint8_t gain) {
       return 1.0;
   }
 }
+#endif
 
 /**
  * Used to print out a long long number
