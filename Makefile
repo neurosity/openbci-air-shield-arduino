@@ -26,8 +26,8 @@ OPENBCI_AIR_LIB = $(OPENBCI_AIR_DIR)/src
 #########################################
 #            Arduino Sketch             #
 #########################################
-SKETCH = $(OPENBCI_AIR_DIR)/examples/ESP32WifiShield/ESP32WifiShield.ino
-
+SKETCH = $(OPENBCI_AIR_DIR)/examples/ESP32WebServer/ESP32WebServer.ino
+#SKETCH = $(OPENBCI_AIR_DIR)/examples/DefaultAirShield/DefaultAirShield.ino
 
 #########################################
 #            ESP32 Lib                #
@@ -39,7 +39,7 @@ ESP_LIBS = $(ESP_ROOT)/libraries
 #            Board Info                 #
 #########################################
 HTTP_ADDR=OpenBCI-2114.local
-UPLOAD_PORT = /dev/ttyUSB0
+UPLOAD_PORT = /dev/tty.usbserial-A104JV88
 CHIP = esp32
 # BOARD = huzzah
 # FLASH_DEF = 4M1M
@@ -55,6 +55,8 @@ LIBS = $(OPENBCI_AIR_LIB) \
        $(ARDUINO_LIBS)/ArduinoJson \
        $(ARDUINO_LIBS)/Time \
        $(ARDUINO_LIBS)/NTPClient \
+       $(ARDUINO_LIBS)/AsyncTCP \
+       $(ARDUINO_LIBS)/ESPAsyncWebServer \
        $(ESP_LIBS)/Wire \
        $(ESP_LIBS)/WiFi  \
        $(ESP_LIBS)/FS  \
@@ -62,7 +64,8 @@ LIBS = $(OPENBCI_AIR_LIB) \
        $(ESP_LIBS)/DNSServer  \
        $(ESP_LIBS)/ESPmDNS \
        $(ESP_LIBS)/Update \
-       $(ESP_LIBS)/ArduinoOTA
+       $(ESP_LIBS)/ArduinoOTA \
+       $(ESP_LIBS)/SPIFFS
 
 EXCLUDE_DIRS = $(ARDUINO_LIBS)/ArduinoJson/test \
 	       $(ARDUINO_LIBS)/ArduinoJson/third-party \

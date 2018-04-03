@@ -1,15 +1,10 @@
-#define ARDUINO_ARCH_ESP8266
-#define ESP8266
+#define ESP32
 #define BUFFER_SIZE 1440
 
-#include <ESP8266WiFi.h>
-#include <DNSServer.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266HTTPUpdateServer.h>
-#include <ESP8266SSDP.h>
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <WiFiClient.h>
 #include <WiFiManager.h>
-#include "SPISlave.h"
-#include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
 #include "OpenBCI_Wifi_Definitions.h"
@@ -27,8 +22,7 @@ unsigned long ledLastFlash;
 int udpPort;
 IPAddress udpAddress;
 
-ESP8266WebServer server(80);
-ESP8266HTTPUpdateServer httpUpdater;
+WiFiServer server(80);
 
 String jsonStr;
 
@@ -81,7 +75,7 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 * Returns true if there is no args on the POST request.
 */
 boolean noBodyInParam() {
-  return server.args() == 0;
+  return false; //server.args() == 0;
 }
 
 void debugPrintDelete() {
@@ -461,20 +455,7 @@ void setup() {
 
   wifi.begin();
 
-#ifdef DEBUG
-  Serial.printf("Starting SSDP...\n");
-#endif
-  SSDP.setSchemaURL("description.xml");
-  SSDP.setHTTPPort(80);
-  SSDP.setName("PTW - OpenBCI Wifi Shield");
-  SSDP.setSerialNumber(wifi.getName());
-  SSDP.setURL("index.html");
-  SSDP.setModelName(wifi.getModelNumber());
-  SSDP.setModelNumber("929000226503");
-  SSDP.setModelURL("http://www.openbci.com");
-  SSDP.setManufacturer("Push The World LLC");
-  SSDP.setManufacturerURL("http://www.pushtheworldllc.com");
-  SSDP.begin();
+
 
   // pinMode(0, INPUT);
   // data has been received from the master. Beware that len is always 32
