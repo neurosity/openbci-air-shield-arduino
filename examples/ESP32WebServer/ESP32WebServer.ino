@@ -88,7 +88,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 
 const char* ssid = "*******";
 const char* password = "*******";
-const char * hostName = "esp-async";
+const char * hostName = "OpenBCI-1234";
 const char* http_username = "admin";
 const char* http_password = "admin";
 

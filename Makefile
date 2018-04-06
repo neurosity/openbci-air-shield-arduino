@@ -26,8 +26,8 @@ OPENBCI_AIR_LIB = $(OPENBCI_AIR_DIR)/src
 #########################################
 #            Arduino Sketch             #
 #########################################
-SKETCH = $(OPENBCI_AIR_DIR)/examples/ESP32WebServer/ESP32WebServer.ino
-#SKETCH = $(OPENBCI_AIR_DIR)/examples/DefaultAirShield/DefaultAirShield.ino
+# SKETCH = $(OPENBCI_AIR_DIR)/examples/ESP32WebServer/ESP32WebServer.ino
+SKETCH = $(OPENBCI_AIR_DIR)/examples/DefaultAirShield/DefaultAirShield.ino
 
 #########################################
 #            ESP32 Lib                #

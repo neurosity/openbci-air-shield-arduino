@@ -4,12 +4,18 @@
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <WiFiClient.h>
+#include <WebServer.h>
 #include <WiFiManager.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
+#include <SlaveSPIClass.h>
 #include "OpenBCI_Wifi_Definitions.h"
 #include "OpenBCI_Wifi.h"
-
+#define SO 17
+#define SI 4
+#define SCLK 16
+#define SS 34
+#define LED_NOTIFY_ESP32 21
 boolean startWifiManager;
 boolean underSelfTest;
 boolean tryConnectToAP;
@@ -22,7 +28,8 @@ unsigned long ledLastFlash;
 int udpPort;
 IPAddress udpAddress;
 
-WiFiServer server(80);
+WebServer server(80);
+SlaveSPI slave;
 
 String jsonStr;
 
@@ -35,6 +42,9 @@ WiFiClient clientTCP;
 
 uint8_t buffer[1440];
 uint32_t bufferPosition = 0;
+
+String txt = "";
+void test();
 
 ///////////////////////////////////////////
 // Utility functions
@@ -105,7 +115,7 @@ void serverReturn(int code, String s) {
   digitalWrite(LED_NOTIFY, LOW);
   sendHeadersForCORS();
   server.send(code, "text/plain", s + "\r\n");
-  digitalWrite(LED_NOTIFY, HIGH);
+  digitalWrite(LED_NOTIFY_ESP32, HIGH);
 }
 
 void returnOK(String s) {
@@ -412,14 +422,14 @@ void removeWifiAPInfo() {
   // wifi.outputString = "Forgetting wifi credentials and rebooting";
   // wifi.clientWaitingForResponseFullfilled = true;
 
-#ifdef DEBUG
-  Serial.println(wifi.outputString);
-  Serial.println(ESP.eraseConfig());
-#else
-  ESP.eraseConfig();
-#endif
-  delay(1000);
-  ESP.reset();
+// #ifdef DEBUG
+//   Serial.println(wifi.outputString);
+//   Serial.println(ESP.eraseConfig());
+// #else
+//   ESP.eraseConfig();
+// #endif
+  WiFiManager wifiManager;
+  wifiManager.resetSettings();
   delay(1000);
 }
 
@@ -455,35 +465,38 @@ void setup() {
 
   wifi.begin();
 
+  pinMode(LED_NOTIFY_ESP32, OUTPUT);
 
 
   // pinMode(0, INPUT);
   // data has been received from the master. Beware that len is always 32
   // and the buffer is autofilled with zeroes if data is less than 32 bytes long
   // It's up to the user to implement protocol for handling data length
-  SPISlave.onData([](uint8_t * data, size_t len) {
-    wifi.spiProcessPacket(data);
-  });
+  // SPISlave.onData([](uint8_t * data, size_t len) {
+  //   wifi.spiProcessPacket(data);
+  // });
 
-  SPISlave.onDataSent([]() {
-    wifi.spiOnDataSent();
-    SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
-  });
+  // SPISlave.onDataSent([]() {
+  //   wifi.spiOnDataSent();
+  //   SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
+  // });
 
-  // The master has read the status register
-  SPISlave.onStatusSent([]() {
-    // #ifdef DEBUG
-    // Serial.println("Status Sent");
-    // #endif
-    SPISlave.setStatus(209);
-  });
+  // // The master has read the status register
+  // SPISlave.onStatusSent([]() {
+  //   // #ifdef DEBUG
+  //   // Serial.println("Status Sent");
+  //   // #endif
+  //   SPISlave.setStatus(209);
+  // });
 
-  // Setup SPI Slave registers and pins
-  SPISlave.begin();
+  // // Setup SPI Slave registers and pins
+  // SPISlave.begin();
 
-  // Set the status register (if the master reads it, it will read this value)
-  SPISlave.setStatus(209);
-  SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
+  // // Set the status register (if the master reads it, it will read this value)
+  // SPISlave.setStatus(209);
+  // SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
+
+  slave.begin((gpio_num_t)SO,(gpio_num_t)SI,(gpio_num_t)SCLK,(gpio_num_t)SS,8,test);//seems to work with groups of 4 bytes
 
 #ifdef DEBUG
   Serial.println("SPI Slave ready");
@@ -544,9 +557,9 @@ void setup() {
 #ifdef DEBUG
     Serial.println("SSDP HIT");
 #endif
-    digitalWrite(LED_NOTIFY, LOW);
-    SSDP.schema(server.client());
-    digitalWrite(LED_NOTIFY, HIGH);
+    digitalWrite(LED_NOTIFY_ESP32, LOW);
+    // SSDP.schema(server.client());
+    digitalWrite(LED_NOTIFY_ESP32, HIGH);
   });
   server.on(HTTP_ROUTE_YT, HTTP_GET, [](){
 #ifdef DEBUG
@@ -601,7 +614,7 @@ void setup() {
 #endif
     if (!wifi.spiHasMaster()) return returnNoSPIMaster();
     wifi.passthroughCommands("b");
-    SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
+    slave.trans_queue(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
     returnOK();
   });
   server.on(HTTP_ROUTE_STREAM_START, HTTP_OPTIONS, sendHeadersForOptions);
@@ -612,7 +625,8 @@ void setup() {
 #endif
     if (!wifi.spiHasMaster()) return returnNoSPIMaster();
     wifi.passthroughCommands("s");
-    SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
+    // SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
+    slave.trans_queue(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
     returnOK();
   });
   server.on(HTTP_ROUTE_STREAM_STOP, HTTP_OPTIONS, sendHeadersForOptions);
@@ -693,7 +707,7 @@ void setup() {
 #endif
     returnOK("Reseting wifi. Please power cycle your board in 10 seconds");
     wifiReset = true;
-    digitalWrite(LED_NOTIFY, LOW);
+    digitalWrite(LED_NOTIFY_ESP32, LOW);
   });
   server.on(HTTP_ROUTE_WIFI_DELETE, HTTP_OPTIONS, sendHeadersForOptions);
 
@@ -715,7 +729,7 @@ void setup() {
     ledInterval = 100;
     ledLastFlash = millis();
     ledState = false;
-    // digitalWrite(LED_NOTIFY, HIGH);
+    // digitalWrite(LED_NOTIFY_ESP32, HIGH);
   } else {
     ledState = false;
     ledFlashes = 4;
@@ -740,13 +754,20 @@ void loop() {
 
   if (ledFlashes > 0) {
     if (millis() > (ledLastFlash + ledInterval)) {
-      digitalWrite(LED_NOTIFY, ledState ? HIGH : LOW);
+      digitalWrite(LED_NOTIFY_ESP32, ledState ? HIGH : LOW);
       if (ledState) {
         ledFlashes--;
       }
       ledState = !ledState;
       ledLastFlash = millis();
     }
+  }
+
+  if(slave.getBuff()->length() && digitalRead(SS) == HIGH) {
+    while(slave.getBuff()->length()) 
+      txt+=slave.read();
+    Serial.println("slave input:");
+    Serial.println(txt);
   }
 
   if (!tryConnectToAP) {
@@ -773,7 +794,7 @@ void loop() {
       httpUpdater.setup(&server);
       server.begin();
       MDNS.addService("http", "tcp", 80);
-      // digitalWrite(LED_NOTIFY, HIGH);
+      // digitalWrite(LED_NOTIFY_ESP32, HIGH);
 #ifdef DEBUG
       Serial.println("Connected to network, switching to station mode.");
 #endif
@@ -858,7 +879,7 @@ void loop() {
   }
   if((clientTCP.connected() || wifi.curOutputProtocol == wifi.OUTPUT_PROTOCOL_SERIAL || wifi.curOutputProtocol == wifi.OUTPUT_PROTOCOL_UDP) && (micros() > (lastSendToClient + wifi.getLatency()) || packetsToSend == MAX_PACKETS_PER_SEND_TCP) && (packetsToSend > 0)) {
     // Serial.printf("LS2C: %lums H: %u T: %u P2S: %d", (micros() - lastSendToClient)/1000, wifi.rawBufferHead, wifi.rawBufferTail, packetsToSend);
-    digitalWrite(LED_NOTIFY, LOW);
+    digitalWrite(LED_NOTIFY_ESP32, LOW);
 
     uint32_t taily = wifi.rawBufferTail;
     for (uint8_t i = 0; i < packetsToSend; i++) {
@@ -898,6 +919,6 @@ void loop() {
     }
     bufferPosition = 0;
     wifi.rawBufferTail = taily;
-    digitalWrite(LED_NOTIFY, HIGH);
+    digitalWrite(LED_NOTIFY_ESP32, HIGH);
   }
 }
