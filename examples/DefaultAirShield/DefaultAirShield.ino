@@ -18,6 +18,7 @@
 #define SCLK 16
 #define SS 34
 #define LED_NOTIFY_ESP32 21
+#define VOLTAGE_SENSE_ESP32 35
 boolean startWifiManager;
 boolean underSelfTest;
 boolean tryConnectToAP;
@@ -37,6 +38,7 @@ String jsonStr;
 
 unsigned long lastSendToClient;
 unsigned long lastHeadMove;
+unsigned long lastVoltageRead;
 unsigned long wifiConnectTimeout;
 
 WiFiUDP clientUDP;
@@ -44,6 +46,8 @@ WiFiClient clientTCP;
 
 uint8_t buffer[1440];
 uint32_t bufferPosition = 0;
+
+float currentVoltage = 0.0;
 
 String txt = "";
 void test() {
@@ -437,6 +441,10 @@ void removeWifiAPInfo() {
   delay(1000);
 }
 
+float convertRawToFloat(uint32_t rawCounts) {
+  return (float)rawCounts / 4096.0 * 3.3 * 2.0; // reference voltage is 3.3V but voltage is sent through 50% voltage divider so mulitple by 2
+}
+
 void initializeVariables() {
   ledState = false;
   startWifiManager = false;
@@ -446,11 +454,13 @@ void initializeVariables() {
 
   lastHeadMove = 0;
   lastSendToClient = 0;
+  lastVoltageRead = 0;
   ledFlashes = 0;
   ledInterval = 300;
   ledLastFlash = millis();
   wifiConnectTimeout = millis();
 
+  currentVoltage = 0.0;
   jsonStr = "";
 }
 
@@ -470,7 +480,7 @@ void setup() {
   // WiFi.mode(WIFI_AP);
 
   #ifdef DEBUG
-  Serial.begin(230400);
+  Serial.begin(115200);
   Serial.setDebugOutput(true);
   Serial.println("Serial started");
   #endif
@@ -478,6 +488,7 @@ void setup() {
   wifi.begin();
 
   pinMode(LED_NOTIFY_ESP32, OUTPUT);
+  pinMode(VOLTAGE_SENSE_ESP32, INPUT);
 
 
   // pinMode(0, INPUT);
@@ -752,6 +763,11 @@ void setup() {
     Serial.printf("Stored creds, will try to connect for 10 seconds with %d bytes on heap\n", ESP.getFreeHeap());
 #endif
   }
+
+  uint32_t raw_volt_count = analogRead(VOLTAGE_SENSE_ESP32);
+  Serial.printf("Raw voltage count: %d\n", raw_volt_count);
+  Serial.printf("Voltage = %0.2f\n", convertRawToFloat(raw_volt_count));
+
 #ifdef DEBUG
   Serial.printf("END OF SETUP HEAP: %d\n", ESP.getFreeHeap());
 #endif
@@ -858,13 +874,9 @@ void loop() {
     startWifiManager = false;
 
 #ifdef DEBUG
-    Serial.printf("%d bytes on heap before stopping local server\n", ESP.getFreeHeap());
+    Serial.printf("%d bytes at start of wifi manager\n", ESP.getFreeHeap());
 #endif
-    server.stop();
-    delay(1);
-#ifdef DEBUG
-    Serial.printf("%d bytes on after stopping local server\n", ESP.getFreeHeap());
-#endif
+
     //Local intialization. Once its business is done, there is no need to keep it around
     WiFiManager wifiManager;
     WiFiManagerParameter custom_text("<p>Powered by Push The World</p>");
