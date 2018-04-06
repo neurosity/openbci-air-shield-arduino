@@ -23,6 +23,7 @@ class SlaveSPI
 	
 	void begin(gpio_num_t so,gpio_num_t si,gpio_num_t sclk,gpio_num_t ss,size_t length=128,void(* ext)() = NULL);
 	void trans_queue(String& transmission);//used to queue data to transmit 
+	void trans_queue(uint8_t *buf, int len);
 	inline char* operator[](int i){return (&buff[i]);}
 	inline void flush(){buff = "";}
 	inline bool match(spi_slave_transaction_t * trans);

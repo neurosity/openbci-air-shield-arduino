@@ -72,11 +72,20 @@ void SlaveSPI::trans_intr(spi_slave_transaction_t *trans)
 	setDriver();
 	exter_intr();
 }
-void SlaveSPI::trans_queue(String& transmission){
-	//used to queue data to transmit
-for (int i=0;i<transmission.length();i++)
+
+void SlaveSPI::trans_queue(String& transmission) {
+  //used to queue data to transmit
+	for (int i=0;i<transmission.length();i++)
 		transBuffer += transmission[i];
 }
+
+void SlaveSPI::trans_queue(uint8_t *buf, int len) {
+  //used to queue data to transmit
+	for (int i=0; i < len; i++) {
+		transBuffer += buf[i];
+	}
+}
+
 inline bool SlaveSPI::match(spi_slave_transaction_t * trans)
 {
 	return (this->driver == trans);

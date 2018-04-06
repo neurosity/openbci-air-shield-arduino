@@ -8,7 +8,9 @@
 #include <WiFiManager.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
-#include <SlaveSPIClass.h>
+// #include <SlaveSPIClass.h>
+// #include <HTTPClient.h>
+// #include <ESP32httpUpdate.h>
 #include "OpenBCI_Wifi_Definitions.h"
 #include "OpenBCI_Wifi.h"
 #define SO 17
@@ -29,7 +31,7 @@ int udpPort;
 IPAddress udpAddress;
 
 WebServer server(80);
-SlaveSPI slave;
+// SlaveSPI slave;
 
 String jsonStr;
 
@@ -44,7 +46,9 @@ uint8_t buffer[1440];
 uint32_t bufferPosition = 0;
 
 String txt = "";
-void test();
+void test() {
+  Serial.println("sent");
+}
 
 ///////////////////////////////////////////
 // Utility functions
@@ -450,6 +454,14 @@ void initializeVariables() {
   jsonStr = "";
 }
 
+// To kill the ESP and force a restart
+// taken from https://github.com/espressif/arduino-esp32/issues/1270
+// void hard_restart() {
+//   esp_task_wdt_init(1,true);
+//   esp_task_wdt_add(NULL);
+//   while(true);
+// }
+
 void setup() {
   initializeVariables();
 
@@ -496,7 +508,7 @@ void setup() {
   // SPISlave.setStatus(209);
   // SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
 
-  slave.begin((gpio_num_t)SO,(gpio_num_t)SI,(gpio_num_t)SCLK,(gpio_num_t)SS,8,test);//seems to work with groups of 4 bytes
+  // slave.begin((gpio_num_t)SO, (gpio_num_t)SI, (gpio_num_t)SCLK, (gpio_num_t)SS, BYTES_PER_SPI_PACKET, test); //seems to work with groups of 4 bytes
 
 #ifdef DEBUG
   Serial.println("SPI Slave ready");
@@ -614,7 +626,7 @@ void setup() {
 #endif
     if (!wifi.spiHasMaster()) return returnNoSPIMaster();
     wifi.passthroughCommands("b");
-    slave.trans_queue(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
+    // slave.trans_queue(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
     returnOK();
   });
   server.on(HTTP_ROUTE_STREAM_START, HTTP_OPTIONS, sendHeadersForOptions);
@@ -626,7 +638,7 @@ void setup() {
     if (!wifi.spiHasMaster()) return returnNoSPIMaster();
     wifi.passthroughCommands("s");
     // SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
-    slave.trans_queue(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
+    // slave.trans_queue(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
     returnOK();
   });
   server.on(HTTP_ROUTE_STREAM_STOP, HTTP_OPTIONS, sendHeadersForOptions);
@@ -722,7 +734,7 @@ void setup() {
 #ifdef DEBUG
     Serial.printf("No stored creds, turning wifi into access point with %d bytes on heap\n", ESP.getFreeHeap());
 #endif
-    httpUpdater.setup(&server);
+    // httpUpdater.setup(&server);
     server.begin();
     MDNS.addService("http", "tcp", 80);
     ledFlashes = 10;
@@ -763,12 +775,12 @@ void loop() {
     }
   }
 
-  if(slave.getBuff()->length() && digitalRead(SS) == HIGH) {
-    while(slave.getBuff()->length()) 
-      txt+=slave.read();
-    Serial.println("slave input:");
-    Serial.println(txt);
-  }
+  // if(slave.getBuff()->length() && digitalRead(SS) == HIGH) {
+  //   while(slave.getBuff()->length()) 
+  //     txt+=slave.read();
+  //   Serial.println("slave input:");
+  //   Serial.println(txt);
+  // }
 
   if (!tryConnectToAP) {
     server.handleClient();
@@ -783,15 +795,15 @@ void loop() {
     delay(1000);
     WiFi.disconnect();
     delay(1000);
-    ESP.reset();
-    delay(1000);
+    ESP.restart();
+    // hard_restart();
   }
 
   if (tryConnectToAP) {
     if (WiFi.status() == WL_CONNECTED) {
       tryConnectToAP = false;
       WiFi.mode(WIFI_STA);
-      httpUpdater.setup(&server);
+      // httpUpdater.setup(&server);
       server.begin();
       MDNS.addService("http", "tcp", 80);
       // digitalWrite(LED_NOTIFY_ESP32, HIGH);
@@ -811,7 +823,7 @@ void loop() {
 #ifdef DEBUG
       Serial.printf("Started AP with %d bytes on head\n", ESP.getFreeHeap());
 #endif
-      httpUpdater.setup(&server);
+      // httpUpdater.setup(&server);
       server.begin();
       MDNS.addService("http", "tcp", 80);
       ledFlashes = 10;

@@ -55,12 +55,10 @@ LIBS = $(OPENBCI_AIR_LIB) \
        $(ARDUINO_LIBS)/ArduinoJson \
        $(ARDUINO_LIBS)/Time \
        $(ARDUINO_LIBS)/NTPClient \
-       $(ARDUINO_LIBS)/AsyncTCP \
-       $(ARDUINO_LIBS)/ESPAsyncWebServer \
+       $(ARDUINO_LIBS)/ESPWebServer \
        $(ESP_LIBS)/Wire \
        $(ESP_LIBS)/WiFi  \
        $(ESP_LIBS)/FS  \
-       $(ESP_LIBS)/ESPWebServer  \
        $(ESP_LIBS)/DNSServer  \
        $(ESP_LIBS)/ESPmDNS \
        $(ESP_LIBS)/Update \
