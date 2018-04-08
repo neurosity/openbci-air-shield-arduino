@@ -19,6 +19,7 @@
 #define SS 34
 #define LED_NOTIFY_ESP32 21
 #define VOLTAGE_SENSE_ESP32 35
+
 boolean startWifiManager;
 boolean underSelfTest;
 boolean tryConnectToAP;
@@ -532,7 +533,7 @@ void setup() {
     debugPrintGet();
 #endif
     String ip = "192.168.4.1";
-    String out = "<!DOCTYPE html><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><html lang=\"en\"><h1 style=\"margin:  auto\;width: 90%\;text-align: center\;\">Push The World</h1><br>";
+    String out = "<!DOCTYPE html><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><html lang=\"en\"><h1 style=\"margin:  auto\;width: 90%\;text-align: center\;\">Neurosity, Inc.</h1><br>";
     if (WiFi.localIP().toString().equals("192.168.4.1") || WiFi.localIP().toString().equals("0.0.0.0")) {
       if (WiFi.SSID().equals("")) {
         out += "<p style=\"margin:  auto\;width: 80%\;text-align: center\;\"><a href='http://";
@@ -873,13 +874,21 @@ void loop() {
   if (startWifiManager) {
     startWifiManager = false;
 
+// #ifdef DEBUG
+//     Serial.printf("%d bytes at start of wifi manager\n", ESP.getFreeHeap());
+// #endif
 #ifdef DEBUG
-    Serial.printf("%d bytes at start of wifi manager\n", ESP.getFreeHeap());
+    Serial.printf("%d bytes on heap before stopping local server\n", ESP.getFreeHeap());
 #endif
-
+    server.stop();
+    
+    delay(100);
+#ifdef DEBUG
+    Serial.printf("%d bytes on after stopping local server\n", ESP.getFreeHeap());
+#endif
     //Local intialization. Once its business is done, there is no need to keep it around
     WiFiManager wifiManager;
-    WiFiManagerParameter custom_text("<p>Powered by Push The World</p>");
+    WiFiManagerParameter custom_text("<p>Powered by Neurosity, Inc.</p>");
     wifiManager.addParameter(&custom_text);
 #ifdef DEBUG
     Serial.printf("Start WiFi Config Portal on WiFi Manager with %d bytes on heap\n" , ESP.getFreeHeap());
