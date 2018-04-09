@@ -36,12 +36,20 @@ void setup() {
 }
 String txt = "";
 String cmd ="";
+boolean statusNeedsToBeSent = false;
+
 void loop() {
   // put your main code here, to run repeatedly:
   if(slave.getBuff()->length()&&digitalRead(SS)==HIGH) {
     while(slave.getBuff()->length())
       txt+=slave.read();
     Serial.println("slave input:");
+    if (txt[0] == 0x04) {
+      Serial.println("Status!");
+      statusNeedsToBeSent = true;
+    } else {
+      Serial.println("Something else");
+    }
     for(int i=0;i<txt.length();i++)
       Serial.print(perfectPrintByteHex(txt[i]));
     Serial.println();
@@ -50,6 +58,19 @@ void loop() {
     cmd +=(char) Serial.read();
   }
   while(txt.length()>0) {
+    if (statusNeedsToBeSent) {
+      Serial.println("Fixing status");
+      statusNeedsToBeSent = false;
+      txt[0]=209;
+      txt[1]=209;
+      txt[2]=0;
+      txt[3]=0;
+      txt[4]=0;
+      txt[5]=214;
+      txt[6]=215;
+      txt[30]=209;
+      txt[31]=209;
+    }
     slave.trans_queue(txt);
     Serial.println("slave output:");
     for(int i=0;i<txt.length();i++)
