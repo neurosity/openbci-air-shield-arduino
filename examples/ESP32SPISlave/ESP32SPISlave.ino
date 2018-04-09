@@ -29,8 +29,8 @@ boolean streamStart = false;
 boolean wasPolled = false;
 
 void test() {
-  Serial.println("SPI Slave Data sent");
-  txt = "";
+  // Serial.println("SPI Slave Data sent");
+  // txt = "";
   // Serial.println(slave[0]);
 }
 
@@ -44,7 +44,7 @@ String perfectPrintByteHex(uint8_t b) {
 void setup() {
   Serial.begin(115200);
   // put your setup code here, to run once:
-  slave.begin((gpio_num_t)SO,(gpio_num_t)SI,(gpio_num_t)SCLK,(gpio_num_t)SS,32,test);//seems to work with groups of 4 bytes
+  slave.begin((gpio_num_t)SO,(gpio_num_t)SI,(gpio_num_t)SCLK,(gpio_num_t)SS,36,test);//seems to work with groups of 4 bytes
   wifi.begin();
 }
 
@@ -62,10 +62,11 @@ void loop() {
       wasPolled = true;
     } else {
       Serial.println("Something else");
-    }
-    // for(int i=0;i<txt.length();i++)
-      // Serial.print(perfectPrintByteHex(txt[i]));
-    // Serial.println();
+      for(int i=0;i<txt.length();i++)
+        Serial.print(perfectPrintByteHex(txt[i]));
+      Serial.println();
+     }
+
   }
   while(Serial.available()) {
     cmd +=(char) Serial.read();
@@ -85,17 +86,22 @@ void loop() {
       wasPolled = false;
       if (!streamStart) {
         Serial.println("Starting stream");
-        // streamStart = true;
-        wifi.passthroughCommands("V");
-        slave.trans_queue(wifi.passthroughBuffer, 32);
-        // txt[0] = 1;
-        // txt[1] = 'b';
+        streamStart = true;
+        // wifi.passthroughCommands("V");
+        txt[0]=0;
+        txt[1]=0;
+        txt[2]=1;
+        txt[3]='b';
+        slave.trans_queue(txt);
         
-      } else {
-        // txt = "";
-        // wifi.passthroughBufferClear();
         // slave.trans_queue(wifi.passthroughBuffer, 32);
+        // txt[0] = 1;
+        // txt[1] = 'b';        
       }
+      txt = "";
+      // wifi.passthroughBufferClear();
+      // slave.trans_queue(wifi.passthroughBuffer, 32);
+
     }
     if (wifi.passthroughPosition > 0) {
       Serial.println("Pass through slave output:");
@@ -103,10 +109,10 @@ void loop() {
         Serial.print(perfectPrintByteHex(wifi.passthroughBuffer[i]));
       Serial.println();
     } else if (txt.length() > 0) {
-      Serial.println("Txt slave output:");
-      for(int i=0;i<txt.length();i++)
-        Serial.print(perfectPrintByteHex(txt[i]));
-      Serial.println();
+      // Serial.println("Txt slave output:");
+      // for(int i=0;i<txt.length();i++)
+      //   Serial.print(perfectPrintByteHex(txt[i]));
+      // Serial.println();
     } 
     // Serial.println(txt);
     txt ="";
