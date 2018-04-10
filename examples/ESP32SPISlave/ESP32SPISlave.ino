@@ -31,11 +31,13 @@ boolean wasData = false;
 boolean wasPolled = false;
 unsigned long lastPacketArrival = 0;
 uint8_t buffer[SPI_BUFFER_LENGTH];
+volatile boolean newData = false;
 
 void test() {
   // Serial.println("SPI Slave Data sent");
   // txt = "";
   // Serial.println(slave[0]);
+  newData = true;
 }
 
 String perfectPrintByteHex(uint8_t b) {
@@ -46,7 +48,7 @@ String perfectPrintByteHex(uint8_t b) {
   }
 }
 void setup() {
-  Serial.begin(1000000);
+  Serial.begin(115200);
   // put your setup code here, to run once:
   slave.begin((gpio_num_t)SO, (gpio_num_t)SI, (gpio_num_t)SCLK, (gpio_num_t)SS, SPI_BUFFER_LENGTH, test);//seems to work with groups of 4 bytes
   wifi.begin();
@@ -55,10 +57,12 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  if (newData) {
+    newData = false;
+    Serial.println("newData");
+  }
   if(slave.getBuff()->length()&&digitalRead(SS)==HIGH) {
-    for(int i = 0; i < SPI_BUFFER_LENGTH; i++) {
 
-    }
     while(slave.getBuff()->length())
       txt+=slave.read();
     // Serial.println("slave input:");
@@ -118,7 +122,7 @@ void loop() {
       unsigned long curTime = millis();
       Serial.printf("%d\n", curTime - lastPacketArrival);
       for(int i=0;i<32;i++)
-        Serial.print(perfectPrintByteHex(buffer[i]));
+        Serial.print(perfectPrintByteHex(slave.bufferRx[i+2]));
       lastPacketArrival = millis();
       Serial.println();
       

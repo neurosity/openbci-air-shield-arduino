@@ -27,8 +27,6 @@ SlaveSPI::SlaveSPI() {
 	delete [] SlaveSPIVector;
 	SlaveSPIVector = temp;
 	buff = "";
-	uint8_t zeBuf[SPI_BUFFER_PACKET_SIZE]
-	bufferRx = uint8_t
 	transBuffer = "";
 }
 
@@ -71,6 +69,7 @@ void SlaveSPI::setup_intr(spi_slave_transaction_t *trans)
 void SlaveSPI::trans_intr(spi_slave_transaction_t *trans) {
 	for(int i=0; i < t_size; i++) {
 		buff += ((char*)driver->rx_buffer)[i];
+		bufferRx[i] = ((char*)driver->rx_buffer)[i];
 		((char*) driver->rx_buffer)[i] = (char)0;
 	}
 	setDriver();

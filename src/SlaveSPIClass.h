@@ -17,10 +17,10 @@ class SlaveSPI
 	spi_slave_transaction_t * driver;
 	void (*exter_intr)();//interrupt at the end of transmission , if u need to do something at the end of each transmission
 	size_t t_size;//length of transaction buffer, (should be set to maximum transition size)
-	uint8_t bufferRx[SPI_BUFFER_PACKET_SIZE];
 	
 	public:
 	SlaveSPI();
+	uint8_t bufferRx[SPI_BUFFER_LENGTH];
 	void setup_intr(spi_slave_transaction_t *trans);//called when the trans is set in the queue
 	void trans_intr(spi_slave_transaction_t *trans);//called when the trans has finished
 	
