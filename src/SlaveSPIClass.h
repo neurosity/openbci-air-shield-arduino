@@ -2,6 +2,8 @@
 #define SLAVE_SPI_CLASS
 #include "Arduino.h"
 #include "driver/spi_slave.h"
+#define SPI_BUFFER_LENGTH 34
+#define SPI_BUFFER_PACKET_SIZE 32
 void setupIntr(spi_slave_transaction_t * trans);
 void transIntr(spi_slave_transaction_t * trans);
 class SlaveSPI
@@ -15,6 +17,7 @@ class SlaveSPI
 	spi_slave_transaction_t * driver;
 	void (*exter_intr)();//interrupt at the end of transmission , if u need to do something at the end of each transmission
 	size_t t_size;//length of transaction buffer, (should be set to maximum transition size)
+	uint8_t bufferRx[SPI_BUFFER_PACKET_SIZE];
 	
 	public:
 	SlaveSPI();

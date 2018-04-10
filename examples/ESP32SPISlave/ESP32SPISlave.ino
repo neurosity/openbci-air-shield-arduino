@@ -19,6 +19,7 @@
 #define SS 34
 #define LED_NOTIFY_ESP32 21
 #define VOLTAGE_SENSE_ESP32 35
+#define SPI_BUFFER_LENGTH 34
 
 
 SlaveSPI slave;
@@ -26,7 +27,10 @@ String txt = "";
 String cmd ="";
 boolean statusNeedsToBeSent = false;
 boolean streamStart = false;
+boolean wasData = false;
 boolean wasPolled = false;
+unsigned long lastPacketArrival = 0;
+uint8_t buffer[SPI_BUFFER_LENGTH];
 
 void test() {
   // Serial.println("SPI Slave Data sent");
@@ -42,9 +46,9 @@ String perfectPrintByteHex(uint8_t b) {
   }
 }
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(1000000);
   // put your setup code here, to run once:
-  slave.begin((gpio_num_t)SO,(gpio_num_t)SI,(gpio_num_t)SCLK,(gpio_num_t)SS,36,test);//seems to work with groups of 4 bytes
+  slave.begin((gpio_num_t)SO, (gpio_num_t)SI, (gpio_num_t)SCLK, (gpio_num_t)SS, SPI_BUFFER_LENGTH, test);//seems to work with groups of 4 bytes
   wifi.begin();
 }
 
@@ -52,6 +56,9 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   if(slave.getBuff()->length()&&digitalRead(SS)==HIGH) {
+    for(int i = 0; i < SPI_BUFFER_LENGTH; i++) {
+
+    }
     while(slave.getBuff()->length())
       txt+=slave.read();
     // Serial.println("slave input:");
@@ -60,6 +67,11 @@ void loop() {
       statusNeedsToBeSent = true;
     } else if (txt[0] == 0x03) {
       wasPolled = true;
+    } else if (txt[0] == 0x02) {
+      wasData = true;
+      for (int i = 0; i < 32; i++) {
+        buffer[i] = txt[i+2];
+      }
     } else {
       Serial.println("Something else");
       for(int i=0;i<txt.length();i++)
@@ -98,10 +110,18 @@ void loop() {
         // txt[0] = 1;
         // txt[1] = 'b';        
       }
-      txt = "";
       // wifi.passthroughBufferClear();
       // slave.trans_queue(wifi.passthroughBuffer, 32);
-
+    }
+    if (wasData) {
+      wasData = false;
+      unsigned long curTime = millis();
+      Serial.printf("%d\n", curTime - lastPacketArrival);
+      for(int i=0;i<32;i++)
+        Serial.print(perfectPrintByteHex(buffer[i]));
+      lastPacketArrival = millis();
+      Serial.println();
+      
     }
     if (wifi.passthroughPosition > 0) {
       Serial.println("Pass through slave output:");
@@ -115,7 +135,7 @@ void loop() {
       // Serial.println();
     } 
     // Serial.println(txt);
-    txt ="";
+    txt = "";
     wifi.passthroughBufferClear();
   }
   while(cmd.length()>0) {
