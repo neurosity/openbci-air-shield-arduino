@@ -67,9 +67,12 @@ void SlaveSPI::setup_intr(spi_slave_transaction_t *trans)
  * Called when the trans has finished.
  */
 void SlaveSPI::trans_intr(spi_slave_transaction_t *trans) {
+	for(int i=0; i < SPI_BUFFER_LENGTH; i++) {
+		bufferRx[i] = ((char*)driver->rx_buffer)[i];
+	}
+
 	for(int i=0; i < t_size; i++) {
 		buff += ((char*)driver->rx_buffer)[i];
-		bufferRx[i] = ((char*)driver->rx_buffer)[i];
 		((char*) driver->rx_buffer)[i] = (char)0;
 	}
 	setDriver();
@@ -84,23 +87,46 @@ void SlaveSPI::trans_queue(String& transmission) {
 
 void SlaveSPI::trans_queue(uint8_t *buf, int len) {
   //used to queue data to transmit
+	// bufferTx[0] = 2;
+	// bufferTx[1] = 0;
 	for (int i=0; i < len; i++) {
-		transBuffer += buf[i];
+		bufferTx[i] = buf[i];
 	}
+}
+
+
+void SlaveSPI::setStatus(int status) {
+  //used to queue data to transmit
+
+	transBuffer = "";
+	transBuffer += status & 0x000000FF;
+	transBuffer += status & 0x000000FF;
 }
 
 inline bool SlaveSPI::match(spi_slave_transaction_t * trans) {
 	return (this->driver == trans);
 }
-
+String SlaveSPI::perfectPrintByteHex(uint8_t b) {
+  if (b <= 0x0F) {
+    return "0" + String(b, HEX);
+  } else {
+    return String(b, HEX);
+  }
+}
 void SlaveSPI::setDriver() {
 	driver->user = NULL;
 	int i = 0;
-	for(; i < t_size && i < transBuffer.length(); i++) {
-		((char*) driver->tx_buffer)[i] = transBuffer[i];
+	
+	// for(; i < t_size && i < transBuffer.length(); i++) {
+	for(; i < SPI_BUFFER_LENGTH; i++) {
+		((uint8_t*) driver->tx_buffer)[i] = bufferTx[i];
+		// ((char*) driver->tx_buffer)[i] = transBuffer[i] - '0';
+		Serial.print(perfectPrintByteHex(((uint8_t*) driver->tx_buffer)[i]));
 	}
-	transBuffer = &(transBuffer[i]);
-	driver->length = t_size * 8;
+	Serial.println();
+	// transBuffer = &(transBuffer[i]);
+	// driver->length = t_size * 8;
+	driver->length = SPI_BUFFER_LENGTH * 8;
 	driver->trans_len = 0;
 	spi_slave_queue_trans(HSPI_HOST,driver,portMAX_DELAY);
 }

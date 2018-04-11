@@ -17,12 +17,14 @@ class SlaveSPI
 	spi_slave_transaction_t * driver;
 	void (*exter_intr)();//interrupt at the end of transmission , if u need to do something at the end of each transmission
 	size_t t_size;//length of transaction buffer, (should be set to maximum transition size)
-	
+	String perfectPrintByteHex(uint8_t b);
 	public:
 	SlaveSPI();
 	uint8_t bufferRx[SPI_BUFFER_LENGTH];
+	uint8_t bufferTx[SPI_BUFFER_LENGTH];
 	void setup_intr(spi_slave_transaction_t *trans);//called when the trans is set in the queue
 	void trans_intr(spi_slave_transaction_t *trans);//called when the trans has finished
+	void setStatus(int status);
 	
 	void begin(gpio_num_t so,gpio_num_t si,gpio_num_t sclk,gpio_num_t ss,size_t length=128,void(* ext)() = NULL);
 	void trans_queue(String& transmission);//used to queue data to transmit 

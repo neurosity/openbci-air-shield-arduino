@@ -50,7 +50,7 @@ String perfectPrintByteHex(uint8_t b) {
 void setup() {
   Serial.begin(115200);
   // put your setup code here, to run once:
-  slave.begin((gpio_num_t)SO, (gpio_num_t)SI, (gpio_num_t)SCLK, (gpio_num_t)SS, SPI_BUFFER_LENGTH, test);//seems to work with groups of 4 bytes
+  slave.begin((gpio_num_t)SO, (gpio_num_t)SI, (gpio_num_t)SCLK, (gpio_num_t)SS, 32, test);//seems to work with groups of 4 bytes
   wifi.begin();
 }
 
@@ -59,58 +59,67 @@ void loop() {
   // put your main code here, to run repeatedly:
   if (newData) {
     newData = false;
-    Serial.println("newData");
-  }
-  if(slave.getBuff()->length()&&digitalRead(SS)==HIGH) {
-
-    while(slave.getBuff()->length())
-      txt+=slave.read();
+    Serial.print("New Data:\n  ");
+    for(int i=0;i<32;i++){
+      Serial.print(perfectPrintByteHex(slave.bufferRx[i]));
+    }
+    Serial.println();
+    // while(slave.getBuff()->length())
+    //   txt+=slave.read();
     // Serial.println("slave input:");
-    if (txt[0] == 0x04) {
+    if (slave.bufferRx[0] == 0x04) {
       Serial.println("Status!");
+      
       statusNeedsToBeSent = true;
-    } else if (txt[0] == 0x03) {
+      for(int i = 0; i < SPI_BUFFER_LENGTH; i++) {
+        buffer[i] = 0;
+      }
+      buffer[1] = 0xD1;
+      slave.trans_queue(buffer, 32);
+      // slave.setStatus(209);
+    } else if (slave.bufferRx[0] == 0x03) {
       wasPolled = true;
-    } else if (txt[0] == 0x02) {
+
+    } else if (slave.bufferRx[0] == 0x02) {
       wasData = true;
       for (int i = 0; i < 32; i++) {
-        buffer[i] = txt[i+2];
+        buffer[i] = slave.bufferRx[i+2];
       }
-    } else {
-      Serial.println("Something else");
-      for(int i=0;i<txt.length();i++)
-        Serial.print(perfectPrintByteHex(txt[i]));
-      Serial.println();
-     }
+    // } else {
+    //   Serial.println("Something else");
+    //   for(int i=0;i<txt.length();i++)
+    //     Serial.print(perfectPrintByteHex(txt[i]));
+    //   Serial.println();
+    }
 
   }
   while(Serial.available()) {
     cmd +=(char) Serial.read();
   }
-  if(txt.length()>0) {
-    if (statusNeedsToBeSent) {
-      Serial.println("Fixing status");
-      statusNeedsToBeSent = false;
-      txt[0]=209;
-      txt[1]=209;
-      txt[2]=0;
-      txt[3]=0;
-      txt[4]=0;
-      slave.trans_queue(txt);
-    }
+  if(wasData || wasPolled) {
+    // if (statusNeedsToBeSent) {
+    //   Serial.println("Fixing status");
+    //   statusNeedsToBeSent = false;
+    //   txt[0]=209;
+    //   txt[1]=209;
+    //   txt[2]=0;
+    //   txt[3]=0;
+    //   txt[4]=0;
+    //   slave.trans_queue(txt);
+    // }
     if (wasPolled) {
       wasPolled = false;
       if (!streamStart) {
         Serial.println("Starting stream");
         streamStart = true;
-        // wifi.passthroughCommands("V");
-        txt[0]=0;
-        txt[1]=0;
-        txt[2]=1;
-        txt[3]='b';
-        slave.trans_queue(txt);
-        
-        // slave.trans_queue(wifi.passthroughBuffer, 32);
+        // txt[0]=0;
+        // txt[1]=0;
+        // txt[2]=1;
+        // txt[3]='b';
+        // slave.trans_queue(txt);
+
+        wifi.passthroughCommands("b");
+        slave.trans_queue(wifi.passthroughBuffer, 32);
         // txt[0] = 1;
         // txt[1] = 'b';        
       }
