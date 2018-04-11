@@ -94,13 +94,24 @@ void SlaveSPI::trans_queue(uint8_t *buf, int len) {
 	}
 }
 
+void SlaveSPI::setData(uint8_t *buf, int len) {
+  //used to queue data to transmit
+	bufferTx[0] = 2;
+	bufferTx[1] = 0;
+	for (int i=0; i < len; i++) {
+		bufferTx[i+2] = buf[i];
+	}
+}
 
-void SlaveSPI::setStatus(int status) {
+
+void SlaveSPI::setStatus(uint8_t status) {
   //used to queue data to transmit
 
-	transBuffer = "";
-	transBuffer += status & 0x000000FF;
-	transBuffer += status & 0x000000FF;
+	for (int i=0; i < SPI_BUFFER_LENGTH; i++) {
+		bufferTx[i] = 0;
+	}
+	bufferTx[0] = 4;
+	bufferTx[1] = status;
 }
 
 inline bool SlaveSPI::match(spi_slave_transaction_t * trans) {
@@ -121,9 +132,9 @@ void SlaveSPI::setDriver() {
 	for(; i < SPI_BUFFER_LENGTH; i++) {
 		((uint8_t*) driver->tx_buffer)[i] = bufferTx[i];
 		// ((char*) driver->tx_buffer)[i] = transBuffer[i] - '0';
-		Serial.print(perfectPrintByteHex(((uint8_t*) driver->tx_buffer)[i]));
+		// Serial.print(perfectPrintByteHex(((uint8_t*) driver->tx_buffer)[i]));
 	}
-	Serial.println();
+	// Serial.println();
 	// transBuffer = &(transBuffer[i]);
 	// driver->length = t_size * 8;
 	driver->length = SPI_BUFFER_LENGTH * 8;

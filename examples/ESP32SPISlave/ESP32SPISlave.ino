@@ -70,13 +70,13 @@ void loop() {
     if (slave.bufferRx[0] == 0x04) {
       Serial.println("Status!");
       
-      statusNeedsToBeSent = true;
+      // statusNeedsToBeSent = true;
       for(int i = 0; i < SPI_BUFFER_LENGTH; i++) {
         buffer[i] = 0;
       }
-      buffer[1] = 0xD1;
-      slave.trans_queue(buffer, 32);
-      // slave.setStatus(209);
+      // buffer[1] = 0xD1;
+      // slave.trans_queue(buffer, 32);
+      slave.setStatus(209);
     } else if (slave.bufferRx[0] == 0x03) {
       wasPolled = true;
 
@@ -119,7 +119,7 @@ void loop() {
         // slave.trans_queue(txt);
 
         wifi.passthroughCommands("b");
-        slave.trans_queue(wifi.passthroughBuffer, 32);
+        slave.setData(wifi.passthroughBuffer, 32);
         // txt[0] = 1;
         // txt[1] = 'b';        
       }

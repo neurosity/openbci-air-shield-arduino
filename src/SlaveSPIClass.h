@@ -24,7 +24,8 @@ class SlaveSPI
 	uint8_t bufferTx[SPI_BUFFER_LENGTH];
 	void setup_intr(spi_slave_transaction_t *trans);//called when the trans is set in the queue
 	void trans_intr(spi_slave_transaction_t *trans);//called when the trans has finished
-	void setStatus(int status);
+	void setStatus(uint8_t status);
+	void setData(uint8_t *buf, int len);
 	
 	void begin(gpio_num_t so,gpio_num_t si,gpio_num_t sclk,gpio_num_t ss,size_t length=128,void(* ext)() = NULL);
 	void trans_queue(String& transmission);//used to queue data to transmit 
