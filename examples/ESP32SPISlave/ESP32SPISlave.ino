@@ -59,11 +59,13 @@ void loop() {
   // put your main code here, to run repeatedly:
   if (newData) {
     newData = false;
-    Serial.print("New Data:\n  ");
-    for(int i=0;i<32;i++){
-      Serial.print(perfectPrintByteHex(slave.bufferRx[i]));
-    }
-    Serial.println();
+    wifi.passthroughBufferClear();
+    slave.setData(wifi.passthroughBuffer, 32);
+    // Serial.print("New Data:\n  ");
+    // for(int i=0;i<32;i++){
+    //   Serial.print(perfectPrintByteHex(slave.bufferRx[i]));
+    // }
+    // Serial.println();
     // while(slave.getBuff()->length())
     //   txt+=slave.read();
     // Serial.println("slave input:");
@@ -112,28 +114,19 @@ void loop() {
       if (!streamStart) {
         Serial.println("Starting stream");
         streamStart = true;
-        // txt[0]=0;
-        // txt[1]=0;
-        // txt[2]=1;
-        // txt[3]='b';
-        // slave.trans_queue(txt);
-
         wifi.passthroughCommands("b");
-        slave.setData(wifi.passthroughBuffer, 32);
-        // txt[0] = 1;
-        // txt[1] = 'b';        
+        slave.setData(wifi.passthroughBuffer, 32); 
       }
-      // wifi.passthroughBufferClear();
-      // slave.trans_queue(wifi.passthroughBuffer, 32);
     }
     if (wasData) {
       wasData = false;
       unsigned long curTime = millis();
+      wifi.spiProcessPacket(slave.bufferRx + 2);
       Serial.printf("%d\n", curTime - lastPacketArrival);
-      for(int i=0;i<32;i++)
-        Serial.print(perfectPrintByteHex(slave.bufferRx[i+2]));
+      // for(int i=0;i<32;i++)
+        // Serial.print(perfectPrintByteHex(slave.bufferRx[i+2]));
       lastPacketArrival = millis();
-      Serial.println();
+      // Serial.println();
       
     }
     if (wifi.passthroughPosition > 0) {
