@@ -30,7 +30,6 @@ boolean streamStart = false;
 boolean wasData = false;
 boolean wasPolled = false;
 unsigned long lastPacketArrival = 0;
-uint8_t buffer[SPI_BUFFER_LENGTH];
 volatile boolean newData = false;
 
 void test() {
@@ -50,7 +49,7 @@ String perfectPrintByteHex(uint8_t b) {
 void setup() {
   Serial.begin(115200);
   // put your setup code here, to run once:
-  slave.begin((gpio_num_t)SO, (gpio_num_t)SI, (gpio_num_t)SCLK, (gpio_num_t)SS, 32, test);//seems to work with groups of 4 bytes
+  slave.begin((gpio_num_t)SO, (gpio_num_t)SI, (gpio_num_t)SCLK, (gpio_num_t)SS, test);//seems to work with groups of 4 bytes
   wifi.begin();
 }
 
@@ -73,25 +72,12 @@ void loop() {
       Serial.println("Status!");
       
       // statusNeedsToBeSent = true;
-      for(int i = 0; i < SPI_BUFFER_LENGTH; i++) {
-        buffer[i] = 0;
-      }
-      // buffer[1] = 0xD1;
-      // slave.trans_queue(buffer, 32);
       slave.setStatus(209);
     } else if (slave.bufferRx[0] == 0x03) {
       wasPolled = true;
 
     } else if (slave.bufferRx[0] == 0x02) {
       wasData = true;
-      for (int i = 0; i < 32; i++) {
-        buffer[i] = slave.bufferRx[i+2];
-      }
-    // } else {
-    //   Serial.println("Something else");
-    //   for(int i=0;i<txt.length();i++)
-    //     Serial.print(perfectPrintByteHex(txt[i]));
-    //   Serial.println();
     }
 
   }
@@ -99,16 +85,6 @@ void loop() {
     cmd +=(char) Serial.read();
   }
   if(wasData || wasPolled) {
-    // if (statusNeedsToBeSent) {
-    //   Serial.println("Fixing status");
-    //   statusNeedsToBeSent = false;
-    //   txt[0]=209;
-    //   txt[1]=209;
-    //   txt[2]=0;
-    //   txt[3]=0;
-    //   txt[4]=0;
-    //   slave.trans_queue(txt);
-    // }
     if (wasPolled) {
       wasPolled = false;
       if (!streamStart) {
