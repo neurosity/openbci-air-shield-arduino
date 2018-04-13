@@ -71,6 +71,7 @@ void SlaveSPI::trans_intr(spi_slave_transaction_t *trans) {
 	for(int i=0; i < SPI_BUFFER_LENGTH; i++) {
 		bufferRx[i] = ((char*)driver->rx_buffer)[i];
 	}
+	_data_rx(bufferRx+2, SPI_BUFFER_PACKET_SIZE);
 
 	// for(int i=0; i < t_size; i++) {
 		// buff += ((char*)driver->rx_buffer)[i];
