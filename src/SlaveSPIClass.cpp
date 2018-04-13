@@ -26,6 +26,10 @@ SlaveSPI::SlaveSPI() {
 	size++;
 	delete [] SlaveSPIVector;
 	SlaveSPIVector = temp;
+	// _data_cb(NULL);
+  // _status_cb(NULL);
+  // _data_sent_cb(NULL);
+  // _status_sent_cb(NULL);
 	buff = "";
 	transBuffer = "";
 }
@@ -127,3 +131,45 @@ void SlaveSPI::setDriver() {
 	spi_slave_queue_trans(HSPI_HOST, driver, portMAX_DELAY);
 }
 
+void SlaveSPI::_data_rx(uint8_t * data, uint8_t len)
+{
+    if(_data_cb) {
+        _data_cb(data, len);
+    }
+}
+void SlaveSPI::_status_rx(uint32_t data)
+{
+    if(_status_cb) {
+        _status_cb(data);
+    }
+}
+void SlaveSPI::_data_tx(void)
+{
+    if(_data_sent_cb) {
+        _data_sent_cb();
+    }
+}
+void SlaveSPI::_status_tx(void)
+{
+    if(_status_sent_cb) {
+        _status_sent_cb();
+    }
+}
+
+
+void SlaveSPI::onData(SpiSlaveDataHandler cb)
+{
+    _data_cb = cb;
+}
+void SlaveSPI::onDataSent(SpiSlaveSentHandler cb)
+{
+    _data_sent_cb = cb;
+}
+void SlaveSPI::onStatus(SpiSlaveStatusHandler cb)
+{
+    _status_cb = cb;
+}
+void SlaveSPI::onStatusSent(SpiSlaveSentHandler cb)
+{
+    _status_sent_cb = cb;
+}
