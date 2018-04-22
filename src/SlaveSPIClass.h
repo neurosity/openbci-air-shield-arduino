@@ -21,7 +21,6 @@ class SlaveSPI
 	String buff;//used to save incoming data
 	String transBuffer;//used to buffer outgoing data !not tested!
 	spi_slave_transaction_t * driver;
-	void (*exter_intr)();//interrupt at the end of transmission , if u need to do something at the end of each transmission
 	String perfectPrintByteHex(uint8_t b);
 	SpiSlaveDataHandler _data_cb;
   SpiSlaveStatusHandler _status_cb;
@@ -55,7 +54,7 @@ class SlaveSPI
 	void _data_tx(void);
 	void _status_tx(void);
 	
-	void begin(gpio_num_t so,gpio_num_t si,gpio_num_t sclk,gpio_num_t ss,void(* ext)() = NULL);
+	void begin(gpio_num_t so,gpio_num_t si,gpio_num_t sclk,gpio_num_t ss);
 	void trans_queue(String& transmission);//used to queue data to transmit 
 	void trans_queue(uint8_t *buf, int len);
 	inline char* operator[](int i){return (&buff[i]);}

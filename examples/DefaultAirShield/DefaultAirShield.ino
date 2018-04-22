@@ -8,7 +8,7 @@
 #include <WiFiManager.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
-// #include <SlaveSPIClass.h>
+#include <SlaveSPIClass.h>
 // #include <HTTPClient.h>
 // #include <ESP32httpUpdate.h>
 #include "OpenBCI_Wifi_Definitions.h"
@@ -33,7 +33,7 @@ int udpPort;
 IPAddress udpAddress;
 
 WebServer server(80);
-// SlaveSPI slave;
+SlaveSPI slave;
 
 String jsonStr;
 
@@ -51,9 +51,6 @@ uint32_t bufferPosition = 0;
 float currentVoltage = 0.0;
 
 String txt = "";
-void test() {
-  Serial.println("sent");
-}
 
 ///////////////////////////////////////////
 // Utility functions
@@ -496,31 +493,30 @@ void setup() {
   // data has been received from the master. Beware that len is always 32
   // and the buffer is autofilled with zeroes if data is less than 32 bytes long
   // It's up to the user to implement protocol for handling data length
-  // SPISlave.onData([](uint8_t * data, size_t len) {
-  //   wifi.spiProcessPacket(data);
-  // });
+  slave.onData([](uint8_t * data, size_t len) {
+    wifi.spiProcessPacket(data);
+  });
 
-  // SPISlave.onDataSent([]() {
-  //   wifi.spiOnDataSent();
-  //   SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
-  // });
+  slave.onDataSent([]() {
+    wifi.spiOnDataSent();
+    slave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
+  });
 
-  // // The master has read the status register
-  // SPISlave.onStatusSent([]() {
-  //   // #ifdef DEBUG
-  //   // Serial.println("Status Sent");
-  //   // #endif
-  //   SPISlave.setStatus(209);
-  // });
+  // The master has read the status register
+  slave.onStatusSent([]() {
+    // #ifdef DEBUG
+    // Serial.println("Status Sent");
+    // #endif
+    slave.setStatus(209);
+  });
 
-  // // Setup SPI Slave registers and pins
-  // SPISlave.begin();
+  // Setup SPI Slave registers and pins
 
-  // // Set the status register (if the master reads it, it will read this value)
-  // SPISlave.setStatus(209);
-  // SPISlave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
+  // Set the status register (if the master reads it, it will read this value)
+  slave.setStatus(209);
+  slave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
 
-  // slave.begin((gpio_num_t)SO, (gpio_num_t)SI, (gpio_num_t)SCLK, (gpio_num_t)SS, BYTES_PER_SPI_PACKET, test); //seems to work with groups of 4 bytes
+  slave.begin((gpio_num_t)SO, (gpio_num_t)SI, (gpio_num_t)SCLK, (gpio_num_t)SS); //seems to work with groups of 4 bytes
 
 #ifdef DEBUG
   Serial.println("SPI Slave ready");

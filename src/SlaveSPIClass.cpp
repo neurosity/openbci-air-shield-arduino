@@ -37,7 +37,7 @@ SlaveSPI::SlaveSPI() {
 /**
  * 
  **/
-void SlaveSPI::begin(gpio_num_t so, gpio_num_t si, gpio_num_t sclk, gpio_num_t ss, void(* ext)()) {
+void SlaveSPI::begin(gpio_num_t so, gpio_num_t si, gpio_num_t sclk, gpio_num_t ss) {
 	driver = new spi_slave_transaction_t{SPI_BUFFER_LENGTH * 8, 0, heap_caps_malloc(SPI_BUFFER_LENGTH, MALLOC_CAP_DMA), heap_caps_malloc(SPI_BUFFER_LENGTH, MALLOC_CAP_DMA), NULL};
 	
 	spi_bus_config_t buscfg = {
@@ -54,8 +54,6 @@ void SlaveSPI::begin(gpio_num_t so, gpio_num_t si, gpio_num_t sclk, gpio_num_t s
 	spi_slave_initialize(HSPI_HOST, &buscfg, &slvcfg,1); // DMA channel 1
     
 	spi_slave_queue_trans(HSPI_HOST, driver, portMAX_DELAY); // ready for input (no transmit)
-	
-	exter_intr = ext;
 }
 
 void SlaveSPI::setup_intr(spi_slave_transaction_t *trans)
@@ -72,13 +70,16 @@ void SlaveSPI::trans_intr(spi_slave_transaction_t *trans) {
 		bufferRx[i] = ((char*)driver->rx_buffer)[i];
 	}
 	_data_rx(bufferRx+2, SPI_BUFFER_PACKET_SIZE);
+	if (dataWaiting) {
+		_data_tx();
+		dataWaiting = false;
+	}
+	if (statusWaiting) {
+		_status_tx();
+		statusWaiting = false;
+	}
 
-	// for(int i=0; i < t_size; i++) {
-		// buff += ((char*)driver->rx_buffer)[i];
-		// ((char*) driver->rx_buffer)[i] = (char)0;
-	// }
 	setDriver();
-	exter_intr();
 }
 
 void SlaveSPI::trans_queue(String& transmission) {
@@ -103,6 +104,7 @@ void SlaveSPI::setData(uint8_t *buf, int len) {
 	for (int i=0; i < len; i++) {
 		bufferTx[i+2] = buf[i];
 	}
+	dataWaiting = true;
 }
 
 
@@ -113,6 +115,7 @@ void SlaveSPI::setStatus(uint8_t status) {
 	}
 	bufferTx[0] = 4;
 	bufferTx[1] = status;
+	statusWaiting = true;
 }
 
 inline bool SlaveSPI::match(spi_slave_transaction_t * trans) {
