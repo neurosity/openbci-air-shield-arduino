@@ -105,6 +105,7 @@ void SlaveSPI::setData(uint8_t *buf, int len) {
 		bufferTx[i+2] = buf[i];
 	}
 	dataWaiting = true;
+	Serial.println("ds");
 }
 
 
@@ -135,7 +136,7 @@ void SlaveSPI::setDriver() {
 	spi_slave_queue_trans(HSPI_HOST, driver, portMAX_DELAY);
 }
 
-void SlaveSPI::_data_rx(uint8_t * data, uint8_t len)
+void SlaveSPI::_data_rx(uint8_t * data, size_t len)
 {
     if(_data_cb) {
         _data_cb(data, len);

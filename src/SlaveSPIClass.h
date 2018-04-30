@@ -49,7 +49,7 @@ class SlaveSPI
 	void onDataSent(SpiSlaveSentHandler cb);
 	void onStatus(SpiSlaveStatusHandler cb);
 	void onStatusSent(SpiSlaveSentHandler cb);
-	void _data_rx(uint8_t * data, uint8_t len);
+	void _data_rx(uint8_t * data, size_t len);
 	void _status_rx(uint32_t data);
 	void _data_tx(void);
 	void _status_tx(void);

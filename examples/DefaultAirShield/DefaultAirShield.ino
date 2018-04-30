@@ -494,10 +494,12 @@ void setup() {
   // and the buffer is autofilled with zeroes if data is less than 32 bytes long
   // It's up to the user to implement protocol for handling data length
   slave.onData([](uint8_t * data, size_t len) {
+    Serial.println("+");
     wifi.spiProcessPacket(data);
   });
 
   slave.onDataSent([]() {
+    // Serial.println("Data send");
     wifi.spiOnDataSent();
     slave.setData(wifi.passthroughBuffer, BYTES_PER_SPI_PACKET);
   });
